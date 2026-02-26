@@ -3,46 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZapClone 🚀</title>
+    <title>ZapClone Dark</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="loginModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Bem-vindo</h3>
+            <h3>Entrar no Chat</h3>
             <input type="text" id="usernameInput" placeholder="Seu apelido...">
-            <button id="startChat">Entrar no Grupo</button>
+            <button id="startChat">Entrar</button>
         </div>
     </div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <small>Conectado como:</small>
-            <strong id="displayMyName">Logando...</strong>
-        </div>
-        <div class="online-box">
-            👥 <span id="onlineCount">0</span> Online
-        </div>
-        <div class="group-info">
-            🚀 Grupo Principal
-        </div>
-        <button id="clearChatBtn" class="btn-admin" style="display:none;">🗑️ Limpar Tudo</button>
-    </aside>
+    <div class="main-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="top-icons">
+                <button id="closeMenu" class="icon-btn">☰</button>
+                <button class="icon-btn" title="Novo Chat">📝</button>
+            </div>
+            
+            <div class="bottom-icons">
+                <div id="onlineIndicator" title="Pessoas Online">🟢 <span id="onlineCount">0</span></div>
+                <button class="icon-btn" title="Configurações">⚙️</button>
+            </div>
+        </aside>
 
-    <main class="chat-container">
-        <header class="chat-header">
-            <button id="menuToggle">☰</button>
-            <strong>ZapClone 🚀</strong>
-        </header>
+        <main class="chat-container">
+            <header class="chat-header">
+                <button id="menuToggle">☰</button>
+                <span id="displayMyName">Logando...</span>
+            </header>
 
-        <div id="chatBox" class="chat-messages"></div>
+            <div id="chatBox" class="chat-messages"></div>
 
-        <footer class="chat-footer">
-            <input type="text" id="messageInput" placeholder="Mensagem..." autocomplete="off">
-            <button id="sendBtn">➤</button>
-        </footer>
-    </main>
+            <footer class="chat-footer">
+                <input type="text" id="messageInput" placeholder="Digite sua mensagem..." autocomplete="off">
+                <button id="sendBtn">➤</button>
+            </footer>
+        </main>
+    </div>
 
     <script type="module" src="script.js"></script>
 </body>
