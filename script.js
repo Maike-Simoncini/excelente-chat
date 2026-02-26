@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, remove, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
+// 1. Suas chaves do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCQvYAPoDseWSDV50RHXoImk2zzx822amU",
   authDomain: "meuzap-be2dd.firebaseapp.com",
@@ -11,90 +12,108 @@ const firebaseConfig = {
   appId: "1:4751380990:web:34b4219fb8b19407ecb0af"
 };
 
-// Inicialização
+// 2. Inicialização
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const messagesRef = ref(db, 'mensagens');
-const onlineRef = ref(db, 'online');
 
+// 3. Variáveis Globais
 let meuNome = "";
 const coresUsuarios = {};
 const notifySound = new Audio('snap.mp3');
 
-// Referências
+// 4. Referências do HTML
 const modal = document.getElementById('loginModal');
 const startBtn = document.getElementById('startChat');
 const nameInput = document.getElementById('usernameInput');
-const displayMyName = document.getElementById('displayMyName');
-const onlineCountSpan = document.getElementById('onlineCount');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const chatBox = document.getElementById('chatBox');
-const clearBtn = document.getElementById('clearChatBtn');
-const emojiBtn = document.getElementById('emojiBtn');
+const clearBtn = document.getElementById('clearChatBtn'); // O botão de limpar
 
-// --- 1. EMOJI PICKER (Com proteção contra erro) ---
-try {
-    if (typeof EmojiButton !== 'undefined') {
-        const picker = new EmojiButton({ position: 'top-start' });
-        emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
-        picker.on('emoji', selection => {
-            messageInput.value += selection;
-            messageInput.focus();
-        });
-    }
-} catch (e) { console.warn("Emoji Picker não carregou, mas o chat vai funcionar."); }
-
-// --- 2. LOGICA DE LOGIN ---
+// 5. Lógica de Login e Segurança do Botão ADM
 startBtn.onclick = () => {
-    const nome = nameInput.value.trim();
-    if (nome !== "") {
-        meuNome = nome;
-        if (displayMyName) displayMyName.innerText = meuNome; // DESTrava o "Logando..."
+    const nomeDigitado = nameInput.value.trim();
+    if (nomeDigitado !== "") {
+        meuNome = nomeDigitado;
         modal.style.display = 'none';
 
-        if (meuNome.toUpperCase() === "MAIKE") clearBtn.style.display = "block";
-
-        const myStatusRef = ref(db, 'online/' + meuNome);
-        set(myStatusRef, true);
-        onDisconnect(myStatusRef).remove();
+        // Só mostra o botão de limpar se o nome for MAIKE (em maiúsculo)
+        if (meuNome.toUpperCase() === "MAIKE") {
+            clearBtn.style.display = "block";
+        } else {
+            clearBtn.style.display = "none";
+        }
     }
 };
 
-// --- 3. CONTADOR ONLINE ---
-onValue(onlineRef, (snapshot) => {
-    if (onlineCountSpan) onlineCountSpan.innerText = snapshot.size || 0;
-});
+// 6. Função para gerar cores aleatórias para os outros
+const gerarCor = () => {
+    const cores = ['#34B7F1', '#FF5733', '#C70039', '#900C3F', '#FFC300', '#A29BFE'];
+    return cores[Math.floor(Math.random() * cores.length)];
+};
 
-// --- 4. ENVIAR E RECEBER (Padrão) ---
-function enviar() {
-    const texto = messageInput.value.trim();
-    if (texto !== "" && meuNome !== "") {
-        push(messagesRef, { texto: texto, usuario: meuNome, timestamp: Date.now() });
+// 7. Função de Enviar Mensagem
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (text !== "" && meuNome !== "") {
+        push(messagesRef, {
+            texto: text,
+            usuario: meuNome,
+            timestamp: Date.now()
+        });
         messageInput.value = "";
     }
 }
-sendBtn.onclick = enviar;
-messageInput.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-clearBtn.onclick = () => { if (confirm("Apagar tudo?")) remove(messagesRef); };
+sendBtn.onclick = sendMessage;
+messageInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
 
-const gerarCor = () => ['#34B7F1', '#FF5733', '#25D366', '#FFC300', '#A29BFE'][Math.floor(Math.random() * 5)];
+// 8. Lógica para LIMPAR TUDO (Apenas para você)
+clearBtn.onclick = () => {
+    if (confirm("ATENÇÃO: Deseja apagar TODO o histórico de mensagens?")) {
+        remove(messagesRef)
+            .then(() => {
+                chatBox.innerHTML = ""; // Limpa a tela localmente
+                alert("O banco de dados foi zerado!");
+            })
+            .catch((error) => alert("Erro ao apagar: " + error.message));
+    }
+};
 
+// 9. Recebimento de Mensagens em Tempo Real
 onChildAdded(messagesRef, (data) => {
     const msg = data.val();
     const div = document.createElement('div');
-    const hora = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    const dataMsg = new Date(msg.timestamp);
+    const hora = dataMsg.getHours().toString().padStart(2, '0') + ':' + 
+                 dataMsg.getMinutes().toString().padStart(2, '0');
+    
     div.classList.add('message');
+
     if (msg.usuario === meuNome) {
         div.classList.add('sent');
-        div.innerHTML = `<span>${msg.texto}</span><small style="display:block; font-size:10px; opacity:0.5; text-align:right;">${hora}</small>`;
+        div.innerHTML = `
+            <span>${msg.texto}</span>
+            <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>
+        `;
     } else {
-        if (!coresUsuarios[msg.usuario]) coresUsuarios[msg.usuario] = gerarCor();
+        if (!coresUsuarios[msg.usuario]) {
+            coresUsuarios[msg.usuario] = gerarCor();
+        }
+
         div.classList.add('received');
-        div.innerHTML = `<small style="color:${coresUsuarios[msg.usuario]}; font-weight:bold;">${msg.usuario}</small><br><span>${msg.texto}</span><small style="display:block; font-size:10px; opacity:0.5; text-align:right;">${hora}</small>`;
+        div.innerHTML = `
+            <small style="display:block; color:${coresUsuarios[msg.usuario]}; font-weight:bold; margin-bottom:4px;">${msg.usuario}</small>
+            <span>${msg.texto}</span>
+            <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>
+        `;
+
+        // Toca o som se a aba estiver ativa
         notifySound.play().catch(() => {});
     }
+    
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 });
