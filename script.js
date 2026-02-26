@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, remove, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // 1. Suas chaves do Firebase
 const firebaseConfig = {
@@ -16,6 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const messagesRef = ref(db, 'mensagens');
+const onlineRef = ref(db, 'online'); // Referência para usuários online
 
 // 3. Variáveis Globais
 let meuNome = "";
@@ -29,31 +30,63 @@ const nameInput = document.getElementById('usernameInput');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const chatBox = document.getElementById('chatBox');
-const clearBtn = document.getElementById('clearChatBtn'); // O botão de limpar
+const clearBtn = document.getElementById('clearChatBtn');
+const displayMyName = document.getElementById('displayMyName'); // Onde aparece seu nome
+const onlineCountSpan = document.getElementById('onlineCount'); // Onde aparece o contador
+const emojiBtn = document.getElementById('emojiBtn'); // Botão de emoji
 
-// 5. Lógica de Login e Segurança do Botão ADM
+// --- 5. LÓGICA DO SELETOR DE EMOJI ---
+try {
+    const picker = new EmojiButton({
+        position: 'top-start',
+        rootElement: document.body
+    });
+
+    emojiBtn.onclick = () => {
+        picker.togglePicker(emojiBtn);
+    };
+
+    picker.on('emoji', selection => {
+        messageInput.value += selection;
+        messageInput.focus();
+    });
+} catch (e) {
+    console.log("Aguardando carregamento da biblioteca de emojis...");
+}
+
+// --- 6. LÓGICA DE LOGIN ---
 startBtn.onclick = () => {
     const nomeDigitado = nameInput.value.trim();
     if (nomeDigitado !== "") {
         meuNome = nomeDigitado;
+        
+        // Atualiza o nome na tela (Barra Lateral)
+        if(displayMyName) displayMyName.innerText = meuNome;
+        
         modal.style.display = 'none';
 
-        // Só mostra o botão de limpar se o nome for MAIKE (em maiúsculo)
+        // Lógica de Admin
         if (meuNome.toUpperCase() === "MAIKE") {
             clearBtn.style.display = "block";
         } else {
             clearBtn.style.display = "none";
         }
+
+        // --- SISTEMA DE PRESENÇA (ONLINE) ---
+        const myStatusRef = ref(db, 'online/' + meuNome);
+        set(myStatusRef, true);
+        // Remove da lista quando fechar a aba
+        onDisconnect(myStatusRef).remove();
     }
 };
 
-// 6. Função para gerar cores aleatórias para os outros
-const gerarCor = () => {
-    const cores = ['#34B7F1', '#FF5733', '#C70039', '#900C3F', '#FFC300', '#A29BFE'];
-    return cores[Math.floor(Math.random() * cores.length)];
-};
+// --- 7. ATUALIZAR CONTADOR ONLINE ---
+onValue(onlineRef, (snapshot) => {
+    const totalOnline = snapshot.size || 0;
+    if(onlineCountSpan) onlineCountSpan.innerText = totalOnline;
+});
 
-// 7. Função de Enviar Mensagem
+// --- 8. FUNÇÕES DE MENSAGEM ---
 function sendMessage() {
     const text = messageInput.value.trim();
     if (text !== "" && meuNome !== "") {
@@ -69,23 +102,21 @@ function sendMessage() {
 sendBtn.onclick = sendMessage;
 messageInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
 
-// 8. Lógica para LIMPAR TUDO (Apenas para você)
+const gerarCor = () => {
+    const cores = ['#34B7F1', '#FF5733', '#C70039', '#900C3F', '#FFC300', '#A29BFE'];
+    return cores[Math.floor(Math.random() * cores.length)];
+};
+
 clearBtn.onclick = () => {
-    if (confirm("ATENÇÃO: Deseja apagar TODO o histórico de mensagens?")) {
-        remove(messagesRef)
-            .then(() => {
-                chatBox.innerHTML = ""; // Limpa a tela localmente
-                alert("O banco de dados foi zerado!");
-            })
-            .catch((error) => alert("Erro ao apagar: " + error.message));
+    if (confirm("ATENÇÃO: Deseja apagar TODO o histórico?")) {
+        remove(messagesRef);
+        chatBox.innerHTML = "";
     }
 };
 
-// 9. Recebimento de Mensagens em Tempo Real
 onChildAdded(messagesRef, (data) => {
     const msg = data.val();
     const div = document.createElement('div');
-    
     const dataMsg = new Date(msg.timestamp);
     const hora = dataMsg.getHours().toString().padStart(2, '0') + ':' + 
                  dataMsg.getMinutes().toString().padStart(2, '0');
@@ -94,26 +125,16 @@ onChildAdded(messagesRef, (data) => {
 
     if (msg.usuario === meuNome) {
         div.classList.add('sent');
-        div.innerHTML = `
-            <span>${msg.texto}</span>
-            <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>
-        `;
+        div.innerHTML = `<span>${msg.texto}</span>
+                         <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>`;
     } else {
-        if (!coresUsuarios[msg.usuario]) {
-            coresUsuarios[msg.usuario] = gerarCor();
-        }
-
+        if (!coresUsuarios[msg.usuario]) coresUsuarios[msg.usuario] = gerarCor();
         div.classList.add('received');
-        div.innerHTML = `
-            <small style="display:block; color:${coresUsuarios[msg.usuario]}; font-weight:bold; margin-bottom:4px;">${msg.usuario}</small>
-            <span>${msg.texto}</span>
-            <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>
-        `;
-
-        // Toca o som se a aba estiver ativa
+        div.innerHTML = `<small style="display:block; color:${coresUsuarios[msg.usuario]}; font-weight:bold; margin-bottom:4px;">${msg.usuario}</small>
+                         <span>${msg.texto}</span>
+                         <small style="display:block; font-size:10px; opacity:0.5; text-align:right; margin-top:4px;">${hora}</small>`;
         notifySound.play().catch(() => {});
     }
-    
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 });
