@@ -18,13 +18,22 @@ body, html {
 
 .main-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; }
 
-/* SIDEBAR */
+/* --- SIDEBAR --- */
 .sidebar { 
-    width: 68px; background: var(--sidebar-dark); display: flex; flex-direction: column; 
-    justify-content: space-between; padding: 20px 0; transition: width 0.3s ease; 
-    z-index: 1000; overflow: hidden; border-right: 1px solid var(--border-dark);
+    width: 68px; 
+    background: var(--sidebar-dark); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    padding: 20px 0; 
+    transition: width 0.3s ease, left 0.3s ease; 
+    z-index: 1000; 
+    overflow: hidden; 
+    border-right: 1px solid var(--border-dark);
 }
-.sidebar.expanded { width: 240px; padding-left: 10px; }
+
+/* Expansão no PC */
+.sidebar.expanded { width: 240px; }
 
 .icon-btn {
     display: flex; align-items: center; background: none; border: none; 
@@ -32,11 +41,20 @@ body, html {
     border-radius: 12px; white-space: nowrap;
 }
 .icon-btn:hover { background-color: #333537; color: white; }
-.link-text { display: none; margin-left: 15px; font-size: 14px; opacity: 0; transition: 0.2s; }
-.sidebar.expanded .link-text { display: inline; opacity: 1; }
+
+.link-text { 
+    display: none; 
+    margin-left: 15px; 
+    font-size: 14px; 
+    opacity: 0; 
+    transition: opacity 0.2s; 
+}
+
+/* Mostra texto apenas quando expandida */
+.sidebar.expanded .link-text { display: inline-block; opacity: 1; }
 .icon { font-size: 20px; min-width: 40px; text-align: center; }
 
-/* CHAT AREA */
+/* --- ÁREA DO CHAT --- */
 .chat-container { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
 .chat-header { 
     height: 60px; padding: 0 20px; display: flex; align-items: center; 
@@ -50,27 +68,59 @@ body, html {
 
 .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 
-/* MESSAGES */
+/* BALÕES */
 .message { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 15px; }
 .sent { align-self: flex-end; background: #2b2d31; border-bottom-right-radius: 2px; }
 .received { align-self: flex-start; background: var(--sidebar-dark); border: 1px solid var(--border-dark); border-bottom-left-radius: 2px; }
 
-/* FOOTER & NOTICE */
+/* RODAPÉ */
 .chat-notice { background: var(--bg-dark); padding: 6px; font-size: 11px; color: var(--text-sub); text-align: center; border-top: 1px solid var(--border-dark); }
 .chat-footer { padding: 10px 20px 20px; display: flex; align-items: center; gap: 10px; background: var(--bg-dark); }
 #messageInput { flex: 1; background: var(--sidebar-dark); border: 1px solid var(--border-dark); padding: 12px 20px; border-radius: 25px; color: white; outline: none; }
 #sendBtn { background: none; border: none; color: var(--accent); font-size: 24px; cursor: pointer; }
 
-/* LIGHT MODE */
-body.light-mode { --bg-dark: #f0f2f5; --sidebar-dark: #ffffff; --border-dark: #ddd; --text-main: #1f1f1f; --text-sub: #5f6368; }
-body.light-mode .sent { background: #dcf8c6; }
+/* --- TEMA CLARO PERSONALIZADO (EXCELENTE) --- */
+body.light-mode { 
+    --bg-dark: #f8f9fa; 
+    --sidebar-dark: #ffffff; 
+    --border-dark: #e0e0e0; 
+    --text-main: #202124; 
+    --text-sub: #5f6368; 
+    --accent: #1a73e8; /* Azul mais forte para o modo claro */
+}
 
-/* RESPONSIVE */
+/* Correção de visibilidade no modo claro */
+body.light-mode #messageInput { 
+    color: #000000 !important; /* Letras pretas */
+    background: #ffffff;
+}
+
+body.light-mode #menuToggle, 
+body.light-mode #closeMenu .icon,
+body.light-mode .project-name { 
+    color: #202124 !important; /* Ícone ☰ preto */
+}
+
+body.light-mode .sent { 
+    background: #e3f2fd; /* Azul bem clarinho para suas mensagens */
+    color: #000;
+}
+
+body.light-mode .icon-btn:hover {
+    background-color: #f1f3f4;
+}
+
+/* RESPONSIVIDADE MOBILE */
 @media (max-width: 768px) {
     #menuToggle { display: block; }
     .project-name { display: none; }
-    .sidebar { position: fixed; left: -250px; height: 100%; width: 250px !important; transition: 0.3s; }
-    .sidebar.active { left: 0; }
+    .sidebar { 
+        position: fixed; 
+        left: -250px; /* Esconde a aba totalmente */
+        height: 100%; 
+        width: 250px !important; 
+    }
+    .sidebar.active { left: 0; } /* Traz para a tela */
 }
 
 /* LOGIN MODAL */
