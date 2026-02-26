@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu ZapClone - Firebase</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Bem-vindo ao Chat</h3>
+            <p>Como você quer ser chamado?</p>
+            <input type="text" id="usernameInput" placeholder="Seu nome...">
+            <button id="startChat">Entrar no Chat</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <header class="header">Meu Perfil</header>
+            <div class="search-box">
+                <input type="text" placeholder="Pesquisar conversas">
+            </div>
+            <div class="contacts">
+                <div class="contact-item active">
+                    <div class="avatar"></div>
+                    <div class="info">
+                        <span class="name">Grupo Geral</span>
+                        <span class="last-msg">Mensagens em tempo real</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="chat-window">
+            <header class="header" id="chatHeader">Chat Global</header>
+            
+            <div class="message-container" id="chatBox">
+                </div>
+
+            <footer class="chat-input">
+                <input type="text" id="messageInput" placeholder="Digite uma mensagem">
+                <button id="sendBtn">Enviar</button>
+            </footer>
+        </main>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
